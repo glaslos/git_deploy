@@ -1,9 +1,7 @@
-!http://logsol.github.com/Github-Auto-Deploy/images/Github-Auto-Deploy.png!
+# Git Auto Deploy
 
-h1. What is it?
-
-this is a small HTTP server written in python. 
-It allows you to have a version of your project installed, that will be updated automatically on each Github push.
+This is a small HTTP server written in python. It allows you to have a version of your project installed,
+that will be updated automatically on each Github push.
 
 To set it up, do the following:
 * install python
