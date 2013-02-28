@@ -1,36 +1,36 @@
 #!/usr/bin/env python
 
-import json, urlparse, sys, os
+import json
+import urlparse
+import sys
+import os
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from subprocess import call
 
-class GitAutoDeploy(BaseHTTPRequestHandler):
 
-    CONFIG_FILEPATH = './GitAutoDeploy.conf.json'
+class GitDeploy(BaseHTTPRequestHandler):
+
+    CONFIG_FILEPATH = './git_deploy.conf.json'
     config = None
     quiet = False
     daemon = False
 
-    @classmethod
-    def getConfig(myClass):
-        if(myClass.config == None):
+    def get_config(self):
+        if not self.config:
             try:
-                configString = open(myClass.CONFIG_FILEPATH).read()
+                configString = open(self.CONFIG_FILEPATH).read()
             except:
-                sys.exit('Could not load ' + myClass.CONFIG_FILEPATH + ' file')
-
+                sys.exit('Could not load ' + self.CONFIG_FILEPATH + ' file')
             try:
-                myClass.config = json.loads(configString)
+                self.config = json.loads(configString)
             except:
-                sys.exit(myClass.CONFIG_FILEPATH + ' file is not valid json')
-
-            for repository in myClass.config['repositories']:
-                if(not os.path.isdir(repository['path'])):
+                sys.exit(self.CONFIG_FILEPATH + ' file is not valid json')
+            for repository in self.config['repositories']:
+                if not os.path.isdir(repository['path']):
                     sys.exit('Directory ' + repository['path'] + ' not found')
-                if(not os.path.isdir(repository['path'] + '/.git')):
+                if not os.path.isdir(repository['path'] + '/.git'):
                     sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
-
-        return myClass.config
+        return self.config
 
     def do_POST(self):
         urls = self.parseRequest()
@@ -52,9 +52,9 @@ class GitAutoDeploy(BaseHTTPRequestHandler):
 
     def getMatchingPaths(self, repoUrl):
         res = []
-        config = self.getConfig()
+        config = self.get_config()
         for repository in config['repositories']:
-            if(repository['url'] == repoUrl):
+            if repository['url'] == repoUrl:
                 res.append(repository['path'])
         return res
 
@@ -64,53 +64,55 @@ class GitAutoDeploy(BaseHTTPRequestHandler):
         self.end_headers()
 
     def pull(self, path):
-        if(not self.quiet):
+        if not self.quiet:
             print "\nPost push request received"
             print 'Updating ' + path
         call(['cd "' + path + '" && git pull'], shell=True)
 
     def deploy(self, path):
-        config = self.getConfig()
+        config = self.get_config()
         for repository in config['repositories']:
-            if(repository['path'] == path):
+            if repository['path'] == path:
                 if 'deploy' in repository:
-                     if(not self.quiet):
-                         print 'Executing deploy command'
-                     call(['cd "' + path + '" && ' + repository['deploy']], shell=True)
+                    if not self.quiet:
+                        print 'Executing deploy command'
+                    for cmd in repository['deploy']:
+                        call(['cd "' + path + '" && ' + cmd], shell=True)
                 break
+
 
 def main():
     try:
         server = None
         for arg in sys.argv: 
-            if(arg == '-d' or arg == '--daemon-mode'):
-                GitAutoDeploy.daemon = True
-                GitAutoDeploy.quiet = True
-            if(arg == '-q' or arg == '--quiet'):
-                GitAutoDeploy.quiet = True
+            if arg == '-d' or arg == '--daemon-mode':
+                GitDeploy.daemon = True
+                GitDeploy.quiet = True
+            if arg == '-q' or arg == '--quiet':
+                GitDeploy.quiet = True
                 
-        if(GitAutoDeploy.daemon):
+        if GitDeploy.daemon:
             pid = os.fork()
-            if(pid != 0):
+            if pid != 0:
                 sys.exit()
             os.setsid()
 
-        if(not GitAutoDeploy.quiet):
+        if not GitDeploy.quiet:
             print 'Github Autodeploy Service v 0.1 started'
         else:
             print 'Github Autodeploy Service v 0.1 started in daemon mode'
              
-        server = HTTPServer(('', GitAutoDeploy.getConfig()['port']), GitAutoDeploy)
+        server = HTTPServer(('', GitDeploy.get_config()['port']), GitDeploy)
         server.serve_forever()
     except (KeyboardInterrupt, SystemExit) as e:
-        if(e): # wtf, why is this creating a new line?
+        if e:
             print >> sys.stderr, e
 
-        if(not server is None):
+        if not server is None:
             server.socket.close()
 
-        if(not GitAutoDeploy.quiet):
+        if not GitDeploy.quiet:
             print 'Goodbye'
 
 if __name__ == '__main__':
-     main()
+    main()
