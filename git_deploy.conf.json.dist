@@ -1,0 +1,13 @@
+{
+        "port": 8001,
+        "repositories":
+        [{
+                "url": "https://github.com/",
+                "path": "/opt/",
+                "deploy": [
+                                "pip install -r requirements.txt",
+                                "supervisorctl restart service"
+                          ]
+        }
+        ]
+}
