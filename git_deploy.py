@@ -20,17 +20,17 @@ class GitDeploy(BaseHTTPRequestHandler):
         if not cls.config:
             try:
                 configString = open(cls.CONFIG_FILEPATH).read()
-            except:
+            except IOError:
                 sys.exit('Could not load ' + cls.CONFIG_FILEPATH + ' file')
             try:
                 cls.config = json.loads(configString)
-            except:
+            except ValueError:
                 sys.exit(cls.CONFIG_FILEPATH + ' file is not valid json')
             for repository in cls.config['repositories']:
                 if not os.path.isdir(repository['path']):
                     sys.exit('Directory ' + repository['path'] + ' not found')
                 if not os.path.isdir(repository['path'] + '/.git'):
-                    sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
+                    sys.exit('Directory ' + repository['path'] + ' is not a git repository')
         return cls.config
 
     def do_POST(self):
@@ -99,9 +99,9 @@ def main():
             os.setsid()
 
         if not GitDeploy.quiet:
-            print 'Github Autodeploy Service v 0.1 started'
+            print 'Github  deploy service v 0.2 started'
         else:
-            print 'Github Autodeploy Service v 0.1 started in daemon mode'
+            print 'Github  deploy service v 0.2 started in daemon mode'
              
         server = HTTPServer(('', GitDeploy.get_config()['port']), GitDeploy)
         server.serve_forever()
