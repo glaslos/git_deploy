@@ -15,22 +15,23 @@ class GitDeploy(BaseHTTPRequestHandler):
     quiet = False
     daemon = False
 
-    def get_config(self):
-        if not self.config:
+    @classmethod
+    def get_config(cls):
+        if not cls.config:
             try:
-                configString = open(self.CONFIG_FILEPATH).read()
+                configString = open(cls.CONFIG_FILEPATH).read()
             except:
-                sys.exit('Could not load ' + self.CONFIG_FILEPATH + ' file')
+                sys.exit('Could not load ' + cls.CONFIG_FILEPATH + ' file')
             try:
-                self.config = json.loads(configString)
+                cls.config = json.loads(configString)
             except:
-                sys.exit(self.CONFIG_FILEPATH + ' file is not valid json')
-            for repository in self.config['repositories']:
+                sys.exit(cls.CONFIG_FILEPATH + ' file is not valid json')
+            for repository in cls.config['repositories']:
                 if not os.path.isdir(repository['path']):
                     sys.exit('Directory ' + repository['path'] + ' not found')
                 if not os.path.isdir(repository['path'] + '/.git'):
                     sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
-        return self.config
+        return cls.config
 
     def do_POST(self):
         urls = self.parseRequest()
