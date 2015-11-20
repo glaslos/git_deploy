@@ -4,6 +4,7 @@
         [{
                 "url": "https://github.com/",
                 "path": "/opt/",
+                "gitcmd": "git fetch && git reset --hard origin/master && git clean -df && git checkout master",
                 "deploy": [
                                 "pip install -r requirements.txt",
                                 "supervisorctl restart service"

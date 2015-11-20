@@ -21,7 +21,7 @@ You can even test the whole thing here, by clicking on the "Test Hook" button, w
 When someone pushes changes into Github, it sends a json file to the service hook url. 
 It contains information about the repository that was updated.
 
-All it really does is match the repository urls to your local repository paths in the config file,move there and run "git pull".
+All it really does is match the repository urls to your local repository paths in the config file, move there and run your desired git command.
 
 
 Additionally it runs deploy bash commands that you can add to the config file optionally.
