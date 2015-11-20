@@ -1,7 +1,6 @@
 #!/usr/bin/env python
 
 import json
-import urlparse
 import sys
 import os
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
@@ -14,16 +13,17 @@ class GitDeploy(BaseHTTPRequestHandler):
     config = None
     quiet = False
     daemon = False
+    branch = None
 
     @classmethod
     def get_config(cls):
         if not cls.config:
             try:
-                configString = open(cls.CONFIG_FILEPATH).read()
+                config_string = open(cls.CONFIG_FILEPATH).read()
             except IOError:
                 sys.exit('Could not load ' + cls.CONFIG_FILEPATH + ' file')
             try:
-                cls.config = json.loads(configString)
+                cls.config = json.loads(config_string)
             except ValueError:
                 sys.exit(cls.CONFIG_FILEPATH + ' file is not valid json')
             for repository in cls.config['repositories']:
@@ -42,25 +42,25 @@ class GitDeploy(BaseHTTPRequestHandler):
 
         self.respond(204)
 
-        urls = self.parseRequest()
+        urls = self.parse_request()
         for url in urls:
-            paths = self.getMatchingPaths(url)
+            paths = self.get_matching_paths(url)
             for path in paths:
                 self.fetch(path)
                 self.deploy(path)
 
-    def parseRequest(self):
+    def parse_request(self):
         length = int(self.headers.getheader('content-length'))
         body = self.rfile.read(length)
         payload = json.loads(body)
         self.branch = payload['ref']
         return [payload['repository']['url']]
 
-    def getMatchingPaths(self, repoUrl):
+    def get_matching_paths(self, repo_url):
         res = []
-        config = self.get_config()
-        for repository in config['repositories']:
-            if repository['url'] == repoUrl:
+        self.get_config()
+        for repository in self.config['repositories']:
+            if repository['url'] == repo_url:
                 res.append(repository['path'])
         return res
 
