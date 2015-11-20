@@ -34,9 +34,15 @@ class GitDeploy(BaseHTTPRequestHandler):
                     sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
 
     def do_POST(self):
-        if self.headers.getheader('x-github-event') != 'push':
+        event = self.headers.getheader('X-Github-Event')
+        if event == 'ping':
             if not self.quiet:
-                print('We only handle push events')
+                print('Ping event received')
+            self.respond(204)
+            return
+        if event != 'push':
+            if not self.quiet:
+                print('We only handle ping and push events')
             self.respond(304)
             return
 
@@ -110,10 +116,7 @@ def main():
                 sys.exit()
             os.setsid()
 
-        if not GitDeploy.quiet:
-            print('Github Autodeploy Service v 0.1 started')
-        else:
-            print('Github  deploy service v 0.2 started in daemon mode')
+        print('Github deploy service v 0.3 started in daemon mode')
              
         server = HTTPServer(('', GitDeploy.get_config()['port']), GitDeploy)
         server.serve_forever()
