@@ -14,6 +14,7 @@ class GitDeploy(BaseHTTPRequestHandler):
     quiet = False
     daemon = False
     branch = None
+    is_get_available = False
 
     @classmethod
     def get_config(cls):
@@ -32,6 +33,22 @@ class GitDeploy(BaseHTTPRequestHandler):
                 if not os.path.isdir(repository['path'] + '/.git') \
                         and not os.path.isdir(repository['path'] + '/objects'):
                     sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
+
+    def do_GET(self):
+        if GitDeploy.is_get_available:
+            paths = [repository['path'] for repository in self.getConfig()['repositories']]
+            for path in paths:
+                self.pull(path)
+                self.deploy(path)
+            self.send_response(200)
+            self.send_header("Content-type", "text/html")
+            self.end_headers()
+            self.wfile.write("<html>")
+            self.wfile.write("<head><title>Github Autodeploy</title></head>")
+            self.wfile.write("<body><p>Ok, updated.</p></body>")
+            self.wfile.write("</html>")
+        else:
+            self.send_response(500)
 
     def do_POST(self):
         event = self.headers.getheader('X-Github-Event')
@@ -109,6 +126,8 @@ def main():
                 GitDeploy.quiet = True
             if arg == '-q' or arg == '--quiet':
                 GitDeploy.quiet = True
+            if arg == '-g' or arg == '--get-to-pull':
+                GitDeploy.is_get_available = True
                 
         if GitDeploy.daemon:
             pid = os.fork()

@@ -11,6 +11,7 @@ To set it up, do the following:
 * Enter the matching for your project(s) in the git_deploy.conf.json file
 * Start the server by typing "python git_deploy.py" 
 * To run it as a daemon add --daemon-mode
+* To trigger the pull and deploy via get add --get-to-pull
 * On the Github page go to a repository, then "Admin", "Service Hooks", "Post-Receive URLs" and add the url of your machine + port (e.g. http://example.com:8001).
 
 You can even test the whole thing here, by clicking on the "Test Hook" button, whohoo!
