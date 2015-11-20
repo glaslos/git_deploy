@@ -71,6 +71,7 @@ class GitDeploy(BaseHTTPRequestHandler):
             for path in paths:
                 self.fetch(path)
                 self.deploy(path)
+        self.respond(200)
 
     def parse_request(self):
         length = int(self.headers.getheader('content-length'))
