@@ -3,6 +3,8 @@
 import json
 import sys
 import os
+import hmac
+import hashlib
 from BaseHTTPServer import BaseHTTPRequestHandler, HTTPServer
 from subprocess import call
 
@@ -50,8 +52,59 @@ class GitDeploy(BaseHTTPRequestHandler):
         else:
             self.send_response(500)
 
+    def get_payload(self):
+        length = int(self.headers.getheader('content-length'))
+        body = self.rfile.read(length)
+        payload = json.loads(body)
+        return body, payload
+
+    def _validate_signature(self, secret, data):
+        sha_name, signature = self.headers.getheader('X-Hub-Signature').split('=')
+        if sha_name != 'sha1':
+            return False
+
+        # HMAC requires its key to be bytes, but data is strings.
+        mac = hmac.new(bytes(secret), msg=data, digestmod=hashlib.sha1)
+        return mac.hexdigest() == signature
+
+    def check_hmac_signature(self, body, urls):
+        signature = self.headers.getheader('X-Hub-Signature')
+        if not signature:
+            return True
+
+        config = self.getConfig()
+        secret = None
+        for url in urls:
+            for repository in config['repositories']:
+                if repository['url'] == url:
+                    if 'secret' in repository:
+                        secret = repository['secret']
+        if not secret:
+            if not self.quiet:
+                print('No secret configured')
+            self.respond(304)
+            return False
+
+        if not self._validate_signature(secret, body):
+            if not self.quiet:
+                print('Bad request signature')
+            self.respond(304)
+            return False
+
+        return True
+
     def do_POST(self):
         event = self.headers.getheader('X-Github-Event')
+        body, payload = self.get_payload()
+        try:
+            urls = self.parse_request(payload)
+        except Exception as e:
+            if not self.quiet:
+                print('Cannot parse url. Invalid payload: {}'.format(e))
+            self.respond(304)
+            return
+        if not self.check_hmac_signature(body, urls):
+            return
         if event == 'ping':
             if not self.quiet:
                 print('Ping event received')
@@ -65,19 +118,16 @@ class GitDeploy(BaseHTTPRequestHandler):
 
         self.respond(204)
 
-        urls = self.parse_request()
+        self.respond(200)
         for url in urls:
             paths = self.get_matching_paths(url)
             for path in paths:
                 self.fetch(path)
                 self.deploy(path)
-        self.respond(200)
 
-    def parse_request(self):
-        length = int(self.headers.getheader('content-length'))
-        body = self.rfile.read(length)
-        payload = json.loads(body)
-        self.branch = payload['ref']
+    def parse_request(self, payload):
+        if 'ref' in payload:
+            self.branch = payload['ref']
         return [payload['repository']['url']]
 
     def get_matching_paths(self, repo_url):
