@@ -168,7 +168,8 @@ class GitDeploy(BaseHTTPRequestHandler):
                     if branch is None or branch == self.branch:
                         if not self.quiet:
                             print('Executing deploy command')
-                        call(['cd "' + path + '"', ], shell=True)
+                        os.chdir(path)
+                        print(os.getcwd())
                         for cmd in repository['deploy']:
                             print('Executing deploy command: {}'.format(cmd))
                             call([cmd, ], shell=True)
