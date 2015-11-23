@@ -39,7 +39,7 @@ class GitDeploy(BaseHTTPRequestHandler):
 
     def do_GET(self):
         if GitDeploy.is_get_available:
-            paths = [repository['path'] for repository in self.getConfig()['repositories']]
+            paths = [repository['path'] for repository in self.get_config()['repositories']]
             for path in paths:
                 self.pull(path)
                 self.deploy(path)
@@ -73,7 +73,7 @@ class GitDeploy(BaseHTTPRequestHandler):
         if not signature:
             return True
 
-        config = self.getConfig()
+        config = self.get_config()
         secret = None
         for url in urls:
             for repository in config['repositories']:
@@ -147,7 +147,7 @@ class GitDeploy(BaseHTTPRequestHandler):
 
     def fetch(self, path):
         gitcmd = 'git fetch'
-        config = self.getConfig()
+        config = self.get_config()
         for repository in config['repositories']:
             if repository['path'] == path:
                 if 'gitcmd' in repository:
