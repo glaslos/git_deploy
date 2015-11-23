@@ -117,8 +117,6 @@ class GitDeploy(BaseHTTPRequestHandler):
             self.respond(304)
             return
 
-        self.respond(204)
-
         self.respond(200)
         for url in urls:
             paths = self.get_matching_paths(url)
@@ -170,7 +168,7 @@ class GitDeploy(BaseHTTPRequestHandler):
                     if branch is None or branch == self.branch:
                         if not self.quiet:
                             print('Executing deploy command')
-                        call(['cd "' + path + '""', ], shell=True)
+                        call(['cd "' + path + '"', ], shell=True)
                         for cmd in repository['deploy']:
                             print('Executing deploy command: {}'.format(cmd))
                             call([cmd, ], shell=True)
