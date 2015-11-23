@@ -98,7 +98,7 @@ class GitDeploy(BaseHTTPRequestHandler):
         event = self.headers.getheader('X-Github-Event')
         body, payload = self.get_payload()
         try:
-            urls = self.parse_request(payload)
+            urls = self.parse_rq(payload)
         except Exception as e:
             if not self.quiet:
                 print('Cannot parse url. Invalid payload: {}'.format(e))
@@ -126,10 +126,11 @@ class GitDeploy(BaseHTTPRequestHandler):
                 self.fetch(path)
                 self.deploy(path)
 
-    def parse_request(self, payload):
-        if 'ref' in payload:
-            self.branch = payload['ref']
-        return [payload['repository']['url']]
+    def parse_rq(self, payload=None):
+        if payload:
+            if 'ref' in payload:
+                self.branch = payload['ref']
+            return [payload['repository']['url']]
 
     def get_matching_paths(self, repo_url):
         res = []
