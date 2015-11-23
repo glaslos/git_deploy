@@ -35,6 +35,7 @@ class GitDeploy(BaseHTTPRequestHandler):
                 if not os.path.isdir(repository['path'] + '/.git') \
                         and not os.path.isdir(repository['path'] + '/objects'):
                     sys.exit('Directory ' + repository['path'] + ' is not a Git repository')
+        return cls.config
 
     def do_GET(self):
         if GitDeploy.is_get_available:
@@ -169,7 +170,7 @@ class GitDeploy(BaseHTTPRequestHandler):
                         if not self.quiet:
                             print('Executing deploy command')
                         call(['cd "' + path + '" && ' + repository['deploy']], shell=True)
-                        
+
                     elif not self.quiet:
                         print('Push to different branch (%s != %s), not deploying' % (branch, self.branch))
                 break
@@ -178,7 +179,7 @@ class GitDeploy(BaseHTTPRequestHandler):
 def main():
     server = None
     try:
-        for arg in sys.argv: 
+        for arg in sys.argv:
             if arg == '-d' or arg == '--daemon-mode':
                 GitDeploy.daemon = True
                 GitDeploy.quiet = True
@@ -186,7 +187,7 @@ def main():
                 GitDeploy.quiet = True
             if arg == '-g' or arg == '--get-to-pull':
                 GitDeploy.is_get_available = True
-                
+
         if GitDeploy.daemon:
             pid = os.fork()
             if pid != 0:
@@ -194,7 +195,7 @@ def main():
             os.setsid()
 
         print('Github deploy service v 0.3 started in daemon mode')
-             
+
         server = HTTPServer(('', GitDeploy.get_config()['port']), GitDeploy)
         server.serve_forever()
     except (KeyboardInterrupt, SystemExit) as e:
