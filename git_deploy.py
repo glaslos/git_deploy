@@ -170,7 +170,10 @@ class GitDeploy(BaseHTTPRequestHandler):
                     if branch is None or branch == self.branch:
                         if not self.quiet:
                             print('Executing deploy command')
-                        call(['cd "' + path + '" && ' + repository['deploy'], ], shell=True)
+                        call(['cd "' + path + '""', ], shell=True)
+                        for cmd in repository['deploy']:
+                            print('Executing deploy command: {}'.format(cmd))
+                            call([cmd, ], shell=True)
 
                     elif not self.quiet:
                         print('Push to different branch (%s != %s), not deploying' % (branch, self.branch))
